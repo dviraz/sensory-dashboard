@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAudioStore, Preset } from '@/lib/store';
 import { getPresets, savePreset, deletePreset, DEFAULT_PRESETS } from '@/lib/presets';
 
+const WIZARD_STORAGE_KEY = 'sensory-dashboard-wizard-completed';
+
 export default function PresetManager() {
   const { loadPreset, getCurrentState } = useAudioStore();
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -58,6 +60,14 @@ export default function PresetManager() {
 
   const isDefaultPreset = (id: string) => {
     return DEFAULT_PRESETS.some((p) => p.id === id);
+  };
+
+  const handleRetakeWizard = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(WIZARD_STORAGE_KEY);
+      // Reload page to show wizard
+      window.location.reload();
+    }
   };
 
   return (
@@ -118,16 +128,29 @@ export default function PresetManager() {
             )}
           </div>
 
-          {/* Save Button */}
-          <button
-            onClick={() => setShowSaveDialog(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-            </svg>
-            Save Preset
-          </button>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleRetakeWizard}
+              className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+              title="Find your perfect sound"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <span className="hidden md:inline">Find My Sound</span>
+            </button>
+
+            <button
+              onClick={() => setShowSaveDialog(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              <span className="hidden md:inline">Save Preset</span>
+            </button>
+          </div>
         </div>
       </div>
 

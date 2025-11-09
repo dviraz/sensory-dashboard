@@ -5,6 +5,7 @@ import Visualizer from '@/components/visualizer/Visualizer';
 import AudioMixer from '@/components/audio/AudioMixer';
 import PresetManager from '@/components/PresetManager';
 import Timer from '@/components/Timer';
+import PreferenceWizard from '@/components/PreferenceWizard';
 import { useAudioStore } from '@/lib/store';
 
 export default function Home() {
@@ -13,6 +14,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen relative overflow-hidden">
+      {/* Preference Wizard */}
+      <PreferenceWizard />
+
       {/* Background Visualizer */}
       <Visualizer />
 

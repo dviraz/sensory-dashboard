@@ -36,6 +36,10 @@ interface AudioStore {
   timerRemaining: number;
   timerActive: boolean;
 
+  // Wizard
+  wizardCompleted: boolean;
+  preferredPresetId: string | null;
+
   // Actions for channels
   setChannelSound: (channel: 1 | 2 | 3, sound: string) => void;
   setChannelVolume: (channel: 1 | 2 | 3, volume: number) => void;
@@ -61,6 +65,10 @@ interface AudioStore {
   // Preset actions
   loadPreset: (preset: Preset) => void;
   getCurrentState: () => Preset;
+
+  // Wizard actions
+  setWizardCompleted: (completed: boolean) => void;
+  setPreferredPreset: (presetId: string) => void;
 }
 
 export const useAudioStore = create<AudioStore>((set, get) => ({
@@ -93,6 +101,10 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
   timerDuration: 1500, // 25 minutes
   timerRemaining: 1500,
   timerActive: false,
+
+  // Initial wizard state
+  wizardCompleted: false,
+  preferredPresetId: null,
 
   // Channel actions
   setChannelSound: (channel, sound) => {
@@ -182,4 +194,9 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
       createdAt: new Date().toISOString(),
     };
   },
+
+  // Wizard actions
+  setWizardCompleted: (completed) => set({ wizardCompleted: completed }),
+
+  setPreferredPreset: (presetId) => set({ preferredPresetId: presetId }),
 }));
