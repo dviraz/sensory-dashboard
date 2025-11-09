@@ -3,6 +3,10 @@ import {
   generatePinkNoise,
   generateBrownNoise,
   generateBinauralBeat,
+  generateOceanWaves,
+  generateRain,
+  generateThunderstorm,
+  generateCampfire,
 } from './noise-generators';
 
 export type SoundType =
@@ -11,6 +15,10 @@ export type SoundType =
   | 'White Noise'
   | 'Binaural Beat (Alpha)'
   | 'Binaural Beat (Theta)'
+  | 'Ocean Waves'
+  | 'Rain'
+  | 'Thunderstorm'
+  | 'Campfire'
   | 'None';
 
 interface AudioChannel {
@@ -82,6 +90,10 @@ export class AudioEngine {
     this.audioBuffers.set('Brown Noise', generateBrownNoise(this.audioContext, 30));
     this.audioBuffers.set('Binaural Beat (Alpha)', generateBinauralBeat(this.audioContext, 200, 10, 30));
     this.audioBuffers.set('Binaural Beat (Theta)', generateBinauralBeat(this.audioContext, 200, 6, 30));
+    this.audioBuffers.set('Ocean Waves', generateOceanWaves(this.audioContext, 30));
+    this.audioBuffers.set('Rain', generateRain(this.audioContext, 30));
+    this.audioBuffers.set('Thunderstorm', generateThunderstorm(this.audioContext, 30));
+    this.audioBuffers.set('Campfire', generateCampfire(this.audioContext, 30));
 
     console.log('Noise buffers generated');
   }
@@ -270,6 +282,10 @@ export class AudioEngine {
       'White Noise',
       'Binaural Beat (Alpha)',
       'Binaural Beat (Theta)',
+      'Ocean Waves',
+      'Rain',
+      'Thunderstorm',
+      'Campfire',
     ];
   }
 

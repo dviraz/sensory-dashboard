@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAudioStore, Preset } from '@/lib/store';
 import { getPresets, savePreset, deletePreset, DEFAULT_PRESETS } from '@/lib/presets';
+import { getShareableURL } from '@/lib/preset-sharing';
 
 const WIZARD_STORAGE_KEY = 'sensory-dashboard-wizard-completed';
 
@@ -12,6 +13,7 @@ export default function PresetManager() {
   const [isOpen, setIsOpen] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
+  const [showShareNotification, setShowShareNotification] = useState(false);
 
   // Load presets on mount
   useEffect(() => {
@@ -67,6 +69,29 @@ export default function PresetManager() {
       localStorage.removeItem(WIZARD_STORAGE_KEY);
       // Reload page to show wizard
       window.location.reload();
+    }
+  };
+
+  const handleShareCurrentPreset = async () => {
+    try {
+      const currentState = getCurrentState();
+      const shareableURL = getShareableURL({
+        id: 'current',
+        name: 'My Custom Mix',
+        channel1: currentState.channel1,
+        channel2: currentState.channel2,
+        channel3: currentState.channel3,
+        visualizerEnabled: currentState.visualizerEnabled,
+        visualizerOpacity: currentState.visualizerOpacity,
+        createdAt: new Date().toISOString(),
+      });
+
+      await navigator.clipboard.writeText(shareableURL);
+      setShowShareNotification(true);
+      setTimeout(() => setShowShareNotification(false), 3000);
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+      alert('Failed to copy shareable link');
     }
   };
 
@@ -142,6 +167,17 @@ export default function PresetManager() {
             </button>
 
             <button
+              onClick={handleShareCurrentPreset}
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+              title="Share current settings"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              <span className="hidden md:inline">Share</span>
+            </button>
+
+            <button
               onClick={() => setShowSaveDialog(true)}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
             >
@@ -196,6 +232,16 @@ export default function PresetManager() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Share Notification */}
+      {showShareNotification && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-2 animate-fade-in">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          Shareable link copied to clipboard!
         </div>
       )}
     </div>

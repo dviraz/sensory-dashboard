@@ -17,6 +17,15 @@ export interface Preset {
   createdAt: string;
 }
 
+export interface FocusSession {
+  id: string;
+  startTime: string;
+  endTime: string;
+  duration: number; // in seconds
+  completed: boolean;
+  type: 'work' | 'break';
+}
+
 interface AudioStore {
   // Channel states
   channel1: ChannelState;
@@ -35,6 +44,15 @@ interface AudioStore {
   timerDuration: number; // in seconds
   timerRemaining: number;
   timerActive: boolean;
+  pomodoroEnabled: boolean;
+  pomodoroMode: 'work' | 'break';
+  workDuration: number; // in seconds
+  breakDuration: number; // in seconds
+  completedPomodoros: number;
+
+  // Session History
+  sessions: FocusSession[];
+  currentSessionId: string | null;
 
   // Wizard
   wizardCompleted: boolean;
@@ -61,6 +79,11 @@ interface AudioStore {
   pauseTimer: () => void;
   resetTimer: () => void;
   tickTimer: () => void;
+  togglePomodoro: () => void;
+  setWorkDuration: (duration: number) => void;
+  setBreakDuration: (duration: number) => void;
+  startPomodoroSession: () => void;
+  completeSession: () => void;
 
   // Preset actions
   loadPreset: (preset: Preset) => void;
@@ -101,6 +124,15 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
   timerDuration: 1500, // 25 minutes
   timerRemaining: 1500,
   timerActive: false,
+  pomodoroEnabled: false,
+  pomodoroMode: 'work',
+  workDuration: 1500, // 25 minutes
+  breakDuration: 300, // 5 minutes
+  completedPomodoros: 0,
+
+  // Initial session history
+  sessions: [],
+  currentSessionId: null,
 
   // Initial wizard state
   wizardCompleted: false,
@@ -165,8 +197,66 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
       if (state.timerRemaining > 0) {
         return { timerRemaining: state.timerRemaining - 1 };
       } else {
-        return { timerActive: false };
+        // Timer completed
+        if (state.pomodoroEnabled) {
+          // Switch between work and break
+          const newMode = state.pomodoroMode === 'work' ? 'break' : 'work';
+          const newDuration = newMode === 'work' ? state.workDuration : state.breakDuration;
+          const newCompletedPomodoros = newMode === 'break' ? state.completedPomodoros + 1 : state.completedPomodoros;
+
+          return {
+            timerRemaining: newDuration,
+            timerDuration: newDuration,
+            pomodoroMode: newMode,
+            completedPomodoros: newCompletedPomodoros,
+            timerActive: false, // Stop after each session
+          };
+        } else {
+          return { timerActive: false };
+        }
       }
+    });
+  },
+
+  togglePomodoro: () => set((state) => {
+    const enabled = !state.pomodoroEnabled;
+    return {
+      pomodoroEnabled: enabled,
+      timerDuration: enabled ? state.workDuration : 1500,
+      timerRemaining: enabled ? state.workDuration : 1500,
+      pomodoroMode: 'work',
+    };
+  }),
+
+  setWorkDuration: (duration) => set({ workDuration: duration }),
+
+  setBreakDuration: (duration) => set({ breakDuration: duration }),
+
+  startPomodoroSession: () => {
+    const sessionId = `session-${Date.now()}`;
+    set(() => ({
+      currentSessionId: sessionId,
+      timerActive: true,
+    }));
+  },
+
+  completeSession: () => {
+    set((state) => {
+      if (!state.currentSessionId) return {};
+
+      const session: FocusSession = {
+        id: state.currentSessionId,
+        startTime: new Date(parseInt(state.currentSessionId.split('-')[1])).toISOString(),
+        endTime: new Date().toISOString(),
+        duration: state.timerDuration - state.timerRemaining,
+        completed: true,
+        type: state.pomodoroMode,
+      };
+
+      return {
+        sessions: [...state.sessions, session],
+        currentSessionId: null,
+      };
     });
   },
 
