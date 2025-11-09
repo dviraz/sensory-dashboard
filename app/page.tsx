@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Visualizer from '@/components/visualizer/Visualizer';
+import SpectrumAnalyzer from '@/components/visualizer/SpectrumAnalyzer';
 import AudioMixer from '@/components/audio/AudioMixer';
 import PresetManager from '@/components/PresetManager';
 import Timer from '@/components/Timer';
@@ -14,7 +15,8 @@ import { getPresetFromURL, clearPresetFromURL } from '@/lib/preset-sharing';
 export default function Home() {
   const [hideControls, setHideControls] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
-  const { visualizerEnabled, visualizerOpacity, toggleVisualizer, setVisualizerOpacity, loadPreset } = useAudioStore();
+  const [showSpectrum, setShowSpectrum] = useState(true);
+  const { visualizerEnabled, visualizerOpacity, toggleVisualizer, setVisualizerOpacity, loadPreset, isPlaying } = useAudioStore();
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
@@ -59,6 +61,33 @@ export default function Home() {
 
             {/* Session Stats */}
             <SessionStats />
+
+            {/* Spectrum Analyzer (Winamp-style) */}
+            <div className="w-full max-w-4xl mx-auto">
+              <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-4 backdrop-blur-md shadow-2xl">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                    <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                      Spectrum Analyzer
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowSpectrum(!showSpectrum)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      showSpectrum
+                        ? 'bg-green-500 text-white'
+                        : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                    }`}
+                  >
+                    {showSpectrum ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                <SpectrumAnalyzer enabled={showSpectrum && isPlaying} />
+              </div>
+            </div>
 
             {/* Audio Mixer */}
             <AudioMixer />

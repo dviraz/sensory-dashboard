@@ -38,39 +38,6 @@ export default function PreferenceWizard() {
     }
   }, []);
 
-  // Auto-play timer for preset testing
-  useEffect(() => {
-    if (currentStep === 'testing' && audioInitialized) {
-      const preset = DEFAULT_PRESETS[currentPresetIndex];
-      if (preset) {
-        loadPreset(preset);
-
-        // Start playing
-        setTimeout(() => {
-          audioEngine.playAll();
-        }, 100);
-
-        // Countdown timer
-        setTimeRemaining(TEST_DURATION);
-        timerRef.current = setInterval(() => {
-          setTimeRemaining((prev) => {
-            if (prev <= 1) {
-              handleSkip(); // Auto-advance when time runs out
-              return TEST_DURATION;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [currentStep, currentPresetIndex, audioInitialized]);
-
   const initializeAudio = async () => {
     if (!audioInitialized) {
       try {
@@ -141,6 +108,39 @@ export default function PreferenceWizard() {
     setTestResults(prev => [...prev, { presetId: preset.id, rating: 'skip' }]);
     advanceToNext();
   }, [currentPresetIndex, advanceToNext]);
+
+  // Auto-play timer for preset testing
+  useEffect(() => {
+    if (currentStep === 'testing' && audioInitialized) {
+      const preset = DEFAULT_PRESETS[currentPresetIndex];
+      if (preset) {
+        loadPreset(preset);
+
+        // Start playing
+        setTimeout(() => {
+          audioEngine.playAll();
+        }, 100);
+
+        // Countdown timer
+        setTimeRemaining(TEST_DURATION);
+        timerRef.current = setInterval(() => {
+          setTimeRemaining((prev) => {
+            if (prev <= 1) {
+              handleSkip(); // Auto-advance when time runs out
+              return TEST_DURATION;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [currentStep, currentPresetIndex, audioInitialized, loadPreset, audioEngine, handleSkip]);
 
   const handleComplete = () => {
     if (typeof window !== 'undefined') {

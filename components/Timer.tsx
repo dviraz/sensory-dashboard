@@ -14,10 +14,25 @@ export default function Timer() {
     pauseTimer,
     resetTimer,
     tickTimer,
+    pomodoroEnabled,
+    pomodoroMode,
+    workDuration,
+    breakDuration,
+    completedPomodoros,
+    togglePomodoro,
+    setWorkDuration,
+    setBreakDuration,
   } = useAudioStore();
 
   const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const audioEngine = getAudioEngine();
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   // Timer countdown effect
   useEffect(() => {
@@ -44,17 +59,29 @@ export default function Timer() {
       pauseTimer();
       audioEngine.fadeOut(10000); // 10 second fade
 
-      // Optional: Show notification
-      if (typeof window !== 'undefined' && 'Notification' in window) {
-        if (Notification.permission === 'granted') {
-          new Notification('Focus Timer Complete', {
-            body: 'Time for a break!',
+      // Show notification
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        if (pomodoroEnabled) {
+          if (pomodoroMode === 'work') {
+            new Notification('🍅 Work Session Complete!', {
+              body: 'Great job! Time for a break.',
+              icon: '/icon.png',
+            });
+          } else {
+            new Notification('☕ Break Complete!', {
+              body: 'Ready to focus again?',
+              icon: '/icon.png',
+            });
+          }
+        } else {
+          new Notification('⏰ Focus Timer Complete', {
+            body: 'Session finished!',
             icon: '/icon.png',
           });
         }
       }
     }
-  }, [timerRemaining, timerActive, audioEngine, pauseTimer]);
+  }, [timerRemaining, timerActive, audioEngine, pauseTimer, pomodoroEnabled, pomodoroMode]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -79,13 +106,47 @@ export default function Timer() {
   return (
     <div className="w-full max-w-4xl mx-auto mb-6">
       <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-6 backdrop-blur-md shadow-2xl">
+        {/* Pomodoro Toggle and Info */}
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+              Focus Timer
+            </h3>
+            {pomodoroEnabled && (
+              <div className="flex items-center gap-2">
+                <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  pomodoroMode === 'work'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
+                }`}>
+                  {pomodoroMode === 'work' ? '🍅 Work' : '☕ Break'}
+                </div>
+                <div className="text-xs text-zinc-500">
+                  {completedPomodoros} completed
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={togglePomodoro}
+            disabled={timerActive}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              pomodoroEnabled
+                ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {pomodoroEnabled ? 'Pomodoro ON' : 'Pomodoro OFF'}
+          </button>
+        </div>
+
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* Timer Display */}
           <div className="flex-1 text-center md:text-left">
-            <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider mb-2">
-              Focus Timer
-            </h3>
-
             <div className="text-6xl font-bold text-zinc-100 font-mono mb-2">
               {formatTime(timerRemaining)}
             </div>
@@ -142,23 +203,64 @@ export default function Timer() {
               </button>
             </div>
 
-            {/* Duration Presets */}
-            <div className="grid grid-cols-4 gap-2">
-              {presetDurations.map((preset) => (
-                <button
-                  key={preset.seconds}
-                  onClick={() => handleSetDuration(preset.seconds)}
-                  disabled={timerActive}
-                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                    timerDuration === preset.seconds && !timerActive
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
+            {/* Duration Presets or Pomodoro Settings */}
+            {pomodoroEnabled ? (
+              <div className="space-y-3">
+                <div className="text-xs text-zinc-400 uppercase tracking-wider">Pomodoro Settings</div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Work Duration */}
+                  <div>
+                    <label className="text-xs text-zinc-500 mb-1 block">Work (min)</label>
+                    <select
+                      value={workDuration / 60}
+                      onChange={(e) => setWorkDuration(parseInt(e.target.value) * 60)}
+                      disabled={timerActive}
+                      className="w-full bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="15">15 min</option>
+                      <option value="20">20 min</option>
+                      <option value="25">25 min</option>
+                      <option value="30">30 min</option>
+                      <option value="45">45 min</option>
+                      <option value="50">50 min</option>
+                    </select>
+                  </div>
+                  {/* Break Duration */}
+                  <div>
+                    <label className="text-xs text-zinc-500 mb-1 block">Break (min)</label>
+                    <select
+                      value={breakDuration / 60}
+                      onChange={(e) => setBreakDuration(parseInt(e.target.value) * 60)}
+                      disabled={timerActive}
+                      className="w-full bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="3">3 min</option>
+                      <option value="5">5 min</option>
+                      <option value="10">10 min</option>
+                      <option value="15">15 min</option>
+                      <option value="20">20 min</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {presetDurations.map((preset) => (
+                  <button
+                    key={preset.seconds}
+                    onClick={() => handleSetDuration(preset.seconds)}
+                    disabled={timerActive}
+                    className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                      timerDuration === preset.seconds && !timerActive
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

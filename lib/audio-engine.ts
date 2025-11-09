@@ -31,6 +31,7 @@ interface AudioChannel {
 export class AudioEngine {
   private audioContext: AudioContext | null = null;
   private masterGainNode: GainNode | null = null;
+  private analyserNode: AnalyserNode | null = null;
   private channels: Map<number, AudioChannel> = new Map();
   private audioBuffers: Map<SoundType, AudioBuffer> = new Map();
   private initialized: boolean = false;
@@ -47,9 +48,15 @@ export class AudioEngine {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 
+      // Create analyser node for visualization
+      this.analyserNode = this.audioContext.createAnalyser();
+      this.analyserNode.fftSize = 128; // Classic Winamp style (64 bars)
+      this.analyserNode.smoothingTimeConstant = 0.8;
+
       // Create master gain node (controls overall volume)
       this.masterGainNode = this.audioContext.createGain();
-      this.masterGainNode.connect(this.audioContext.destination);
+      this.masterGainNode.connect(this.analyserNode);
+      this.analyserNode.connect(this.audioContext.destination);
       this.masterGainNode.gain.value = 0.8;
 
       // Create 3 channels
@@ -287,6 +294,13 @@ export class AudioEngine {
       'Thunderstorm',
       'Campfire',
     ];
+  }
+
+  /**
+   * Get the analyser node for visualization
+   */
+  getAnalyser(): AnalyserNode | null {
+    return this.analyserNode;
   }
 
   /**
