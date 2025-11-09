@@ -33,8 +33,8 @@ export default function Home() {
         </header>
 
         {/* Controls Container */}
-        <div className={`flex-1 flex flex-col items-center justify-center p-6 transition-opacity duration-500 ${hideControls ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-          <div className="w-full space-y-6">
+        <div className={`flex-1 flex flex-col items-center justify-start p-6 pt-2 transition-opacity duration-500 ${hideControls ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className="w-full space-y-6 max-w-5xl">
             {/* Preset Manager */}
             <PresetManager />
 

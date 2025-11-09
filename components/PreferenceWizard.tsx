@@ -24,7 +24,7 @@ export default function PreferenceWizard() {
   const [testResults, setTestResults] = useState<PresetTestResult[]>([]);
   const [audioInitialized, setAudioInitialized] = useState(false);
 
-  const { loadPreset, pause, setWizardCompleted, setPreferredPreset } = useAudioStore();
+  const { loadPreset, play, pause, setWizardCompleted, setPreferredPreset } = useAudioStore();
   const audioEngine = getAudioEngine();
   const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -148,7 +148,12 @@ export default function PreferenceWizard() {
     }
     setWizardCompleted(true);
     setIsOpen(false);
-    pause();
+
+    // Start playing the recommended preset
+    setTimeout(() => {
+      audioEngine.playAll();
+      play(); // Update store state to show playing
+    }, 100);
   };
 
   const handleClose = () => {
